@@ -1,0 +1,15 @@
+auth:
+  - name: "git"
+    stringData:
+      url: "https://git.com"
+      password: "your_token"
+      username: "username"
+genesis:
+  config:
+    license_key: "license_key"
+    env:
+      # Genesis environment
+    titan:
+      owner: "you"
+      uid: "5023"
+      email: "you@email.com"
