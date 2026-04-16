@@ -1,0 +1,46 @@
+# ArgoCD Application for ingress-nginx
+# SyncPolicy.automated: prune removes orphaned resources, selfHeal fixes drift, allowEmpty permits zero replicas
+# This pattern deploys Helm charts via ArgoCD—add new apps by creating additional Application manifests
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-nginx
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ingress-nginx
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: true
+    syncOptions:
+      - CreateNamespace=true
+  sources:
+    - repoURL: https://kubernetes.github.io/ingress-nginx
+      targetRevision: 4.13.3
+      chart: ingress-nginx
+      helm:
+        releaseName: nginx-ingress-controller
+        values: |-
+          controller:
+            kind: DaemonSet  # Runs on every node; use Deployment for selective scheduling
+            service:
+              annotations:
+                # AWS NLB annotations for proxy protocol v2 (required for client IP preservation)
+                service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+                service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+                service.beta.kubernetes.io/aws-load-balancer-type: nlb
+                # Targets nodes with label juno-innovations.com/service=true (defined in eks.yaml nodeGroups)
+                service.beta.kubernetes.io/aws-load-balancer-target-node-labels: "juno-innovations.com/service=true"
+                service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval: "10"
+                service.beta.kubernetes.io/aws-load-balancer-healthcheck-timeout: "10"
+                service.beta.kubernetes.io/aws-load-balancer-unhealthy-threshold: "2"
+                service.beta.kubernetes.io/aws-load-balancer-healthy-threshold: "2"
+                service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+                service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: proxy_protocol_v2.enabled=true
+                
+                # REPLACE with your subnet IDs or subnet names (comma-separated)
+                service.beta.kubernetes.io/aws-load-balancer-subnets: "ADD SUBNET HERE" # <-- REPLACE with your subnet IDs or subnet names (comma-separated)
