@@ -1,0 +1,80 @@
+# Karpenter NodePool - ARM64 Nodes (Workstation)
+#
+# Reference template for ARM64 node pools. This is an example - configure it to match your needs.
+#
+# LABEL REQUIRED:
+#   - juno-innovations.com/workstation: "true"
+#   This label identifies nodes for workstation/ARM workloads.
+#   Do NOT change this label.
+#
+# CUSTOMIZE AS NEEDED:
+#   - instanceTypes: Use any ARM64 instance types (c6g.xlarge, c7g.xlarge, m6g.xlarge, r6g.xlarge, etc.)
+#   - capacity-type: Use ["spot"] for cost savings or ["on-demand"] for guaranteed availability
+#   - limits: Adjust based on your maximum expected workload
+#   - topology.kubernetes.io/zone: Set your primary AZ
+#   - nodeClassRef.name: Must match karpenter-nodeclass.yaml (default: service)
+
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: arm64
+spec:
+  # Limits define the maximum resources this pool can provision
+  # Adjust these based on your expected workload requirements
+  limits:
+    cpu: "16"
+    memory: 32Gi
+
+  # Node template specification
+  template:
+    metadata:
+      labels:
+        # REQUIRED: Identifies workstation/ARM nodes
+        juno-innovations.com/workstation: "true"
+    spec:
+      # Reference to EC2NodeClass - must match karpenter-nodeclass.yaml
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: service
+
+      # Instance requirements - constrain what types of nodes Karpenter can provision
+      requirements:
+        # Instance families: c=compute, t=memory, r=general, m=memory-optimized
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values: ["c", "t", "r", "m"]  # REPLACE with your desired ARM instance families
+
+        # Minimum vCPUs (Gt = greater than)
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: Gt
+          values: ["2"]  # REPLACE with your minimum CPU requirement
+
+        # Availability zone - REPLACE with your primary AZ
+        - key: "topology.kubernetes.io/zone"
+          operator: In
+          values: ["us-east-1a"]  # REPLACE with your AZ (e.g., us-east-1a, us-west-2a)
+
+        # Architecture: arm64 (ARM)
+        - key: "kubernetes.io/arch"
+          operator: In
+          values: ["arm64"]
+
+        # Capacity type: spot for cost savings
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values: ["spot"]  # Remove this line or change to ["on-demand"] if spot not suitable
+
+      # Instance type overrides - REPLACE with your desired ARM instance types
+      # Common ARM64 instances:
+      #   c6g    - Compute optimized (c6g.xlarge, c6g.2xlarge)
+      #   c7g    - Compute optimized, 3rd gen (c7g.xlarge, c7g.2xlarge)
+      #   m6g    - Memory optimized (m6g.xlarge, m6g.2xlarge)
+      #   m7g    - Memory optimized, 3rd gen (m7g.xlarge, m7g.2xlarge)
+      #   r6g    - Memory optimized (r6g.xlarge, r6g.2xlarge)
+      #   r7g    - Memory optimized, 3rd gen (r7g.xlarge, r7g.2xlarge)
+      instanceTypes:
+        - c6g.xlarge
+        - c7g.xlarge
+        - m6g.xlarge
+        - r6g.xlarge  # REPLACE with your desired ARM instance types

@@ -1,0 +1,49 @@
+# Karpenter EC2NodeClass - Base configuration for all node pools
+#
+# Reference template for Karpenter EC2NodeClass. This is an example - configure it to match your needs.
+#
+# REQUIRED UPDATES:
+#   1. role: Replace with your cluster's Karpenter Node IAM Role
+#   2. subnetSelectorTerms: Update karpenter.sh/discovery tag to match your cluster name
+#   3. securityGroupSelectorTerms: Update karpenter.sh/discovery tag to match your cluster name
+#   4. volumeSize: Adjust to your storage requirements (default: 100Gi)
+#
+# Karpenter discovers subnets and security groups based on tags.
+# The karpenter.sh/discovery tag must match your cluster name.
+
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: service
+spec:
+  # AMI family for the nodes (AL2023 = Amazon Linux 2023)
+  amiFamily: AL2023
+
+  # IAM role for nodes - MUST be replaced with your cluster's Karpenter Node Role
+  # Find this in AWS IAM Console or run: aws eks describe-cluster --name <cluster> --query cluster.roleArn
+  role: "REPLACE_WITH_YOUR_KARPENTER_NODE_ROLE"
+
+  # Subnet selector - Karpenter discovers subnets with these tags
+  # The karpenter.sh/discovery tag value MUST match your cluster name
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: REPLACE_WITH_YOUR_CLUSTER_NAME
+
+  # Security group selector - Karpenter discovers security groups with these tags
+  # The karpenter.sh/discovery tag value MUST match your cluster name
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: REPLACE_WITH_YOUR_CLUSTER_NAME
+
+  # Block device configuration
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        # Root volume size - adjust based on your storage needs (default: 100Gi)
+        volumeSize: 100Gi
+        # Volume type: gp3 (default), gp2, io1, io2, st1, sc1
+        volumeType: gp3
+
+  # AMI selection - using AL2023 alias which automatically selects the latest Amazon Linux 2023 AMI
+  amiSelectorTerms:
+    - alias: al2023@latest

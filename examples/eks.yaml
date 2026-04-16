@@ -1,0 +1,63 @@
+# EKS Cluster Configuration
+#
+# REQUIRED UPDATES:
+#   1. metadata.name                 - Your cluster name
+#   2. metadata.region              - Your AWS region
+#   3. metadata.tags                - Your cluster name (used for Karpenter discovery)
+#   4. availabilityZones            - Your 2 availability zones
+#   5. managedNodeGroups[].availabilityZones - Your primary AZ
+#   6. managedNodeGroups[].instanceTypes     - Your desired instance types
+#
+# CUSTOMIZE AS NEEDED:
+#   - instanceTypes: Use any EC2 instance types you prefer
+#   - spot: Set to false if you need on-demand instances
+#   - limits: Adjust desiredCapacity, maxSize, minSize as needed
+#
+# Note: managedNodeGroups provides initial boot nodes. Karpenter can be added later
+# for cost-optimized spot instance provisioning (see examples/karpenter-*.yaml).
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: example  # REPLACE with your cluster name
+  region: us-east-1  # REPLACE with your region
+  version: "1.34"
+  tags:
+    karpenter.sh/discovery: example  # REPLACE with your cluster name
+iam:
+  withOIDC: true  # Required for IRSA (IAM Roles for Service Accounts)
+
+vpc:
+  nat:
+    gateway: Disable  # Disabled: use private subnets only, no internet egress
+availabilityZones: ['us-east-1a', 'us-east-1b']  # REPLACE with your AZs
+
+karpenter:
+  version: "1.2.0"
+  createServiceAccount: true
+  withSpotInterruptionQueue: true  # Handles spot instance interruptions via SQS
+
+# REQUIRED: Initial boot node group - replace with Karpenter NodePools after cluster creation
+managedNodeGroups:
+  - name: service
+    spot: true  # Use spot instances for cost savings
+    desiredCapacity: 1
+    maxSize: 2
+    minSize: 1
+    amiFamily: AmazonLinux2023
+    labels:
+      juno-innovations.com/service: "true"  # Node selector for workload placement
+    availabilityZones:
+      - us-east-1a  # REPLACE with your AZ
+    iam:
+      withAddonPolicies:
+        autoScaler: true  # Cluster Autoscaler permissions
+        ebs: true         # EBS CSI driver permissions
+        efs: true         # EFS CSI driver permissions
+        externalDNS: true # External DNS permissions
+    instanceTypes:  # REPLACE with your desired instance types
+      - c5.xlarge
+      - c5a.xlarge
+      - c5ad.xlarge
+      - c6a.xlarge
+      - c7i-flex.xlarge
