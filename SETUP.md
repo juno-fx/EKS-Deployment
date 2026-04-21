@@ -16,6 +16,7 @@
    - `metadata.tags.karpenter.sh/discovery` — your cluster name
    - `availabilityZones` — your 2 AZs
    - `managedNodeGroups[].availabilityZones` — your primary AZ
+   - `managedNodeGroups[].instanceTypes` - This list may need updating depending on your chosen region, see [this list](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html) for full details
 3. Create the cluster:
 
 ```bash
@@ -29,6 +30,12 @@ mkdir -p configs
 eksctl utils write-kubeconfig --cluster <name> --kubeconfig configs/<name>.yaml
 export KUBECONFIG=configs/<name>.yaml
 kubectl get nodes
+```
+
+(Optional) You may need to specify your AWS region if you are unable to see your cluster via `eksctl`
+
+```bash
+export AWS_REGION=<your region>
 ```
 
 You should see your node group nodes listed.
@@ -91,6 +98,8 @@ kubectl rollout status deployment/argocd-server -n argocd
 
 1. Copy `examples/nginx.yaml` to `<name>/nginx.yaml`
 2. Update the `aws-load-balancer-subnets` annotation with your subnet IDs (comma-separated if multiple)
+   - To retrieve your subnet IDs run:
+   `eksctl get cluster --name <cluster-name> --region <region> -o json | jq '.[0].ResourcesVpcConfig.SubnetIds'`
 3. Apply the application:
 
 ```bash
