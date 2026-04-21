@@ -4,8 +4,8 @@
 
 - AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`)
 - [eksctl](https://eksctl.io/installation/) installed
-- [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html) installed
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) installed
+- (Optional) [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html) installed
 
 ## Step 1: Create EKS Cluster (~15 min)
 
