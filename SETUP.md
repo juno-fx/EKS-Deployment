@@ -4,7 +4,6 @@
 
 - AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`)
 - [eksctl](https://eksctl.io/installation/) installed
-- [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html) installed
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) installed
 
 ## Step 1: Create EKS Cluster (~15 min)
@@ -106,7 +105,9 @@ kubectl get svc -n ingress-nginx
 
 Wait for the NLB to be provisioned (check the EXTERNAL-IP field).
 
-## Step 5: DNS (~1 min)
+## Step 5: DNS & TLS
+
+### DNS
 
 Create DNS records pointing to the NLB from ingress-nginx:
 
@@ -118,10 +119,73 @@ Create DNS records pointing to the NLB from ingress-nginx:
 Find the NLB DNS name with:
 
 ```bash
-kubectl get svc -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+kubectl get svc <service-name> -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
 ```
 
-Using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) to automate record creation is recommended.
+### TLS Certificate
+
+The Ingress resource requires a TLS secret named `ingress-certificate` in the `argocd` namespace.
+Choose the path that fits your use case:
+
+---
+
+#### POC / Quick Start — certbot (manual)
+
+**1. Install certbot locally:**
+
+```bash
+sudo apt install certbot   # Ubuntu/Debian
+brew install certbot       # Mac
+```
+
+**2. Generate a cert via DNS challenge (no server required):**
+
+```bash
+certbot certonly --manual --preferred-challenges dns \
+  -d <your-domain>
+```
+
+Certbot will prompt you to add a DNS TXT record to prove domain ownership. Add it in Route 53,
+wait ~30 seconds, then press Enter to continue. Certbot will write the cert files to
+`/etc/letsencrypt/live/<your-domain>/`.
+
+**3. Copy certs to a readable location (certbot writes as root):**
+
+```bash
+sudo cp /etc/letsencrypt/live/<your-domain>/fullchain.pem ~/fullchain.pem
+sudo cp /etc/letsencrypt/live/<your-domain>/privkey.pem ~/privkey.pem
+sudo chown $USER ~/fullchain.pem ~/privkey.pem
+```
+
+**4. Create the TLS secret in the cluster:**
+
+```bash
+kubectl create secret tls ingress-certificate \
+  --cert=<path-to-file>/fullchain.pem \
+  --key=<path-to-file>/privkey.pem \
+  -n argocd
+```
+
+**5. Verify:**
+
+```bash
+kubectl get secret ingress-certificate -n argocd
+```
+
+> **Note:** Let's Encrypt certs expire every **90 days**. You must repeat steps 2–4 to renew.
+> If kubectl cannot reach the cluster from your laptop (private VPC), use AWS CloudShell in
+> the same region and upload the cert files via Actions → Upload file before running step 4.
+
+---
+
+#### Production — cert-manager + ExternalDNS (recommended)
+
+For production deployments, automate both DNS and TLS management:
+
+- **[cert-manager](https://cert-manager.io)** — automatically issues and renews TLS certs via
+  Let's Encrypt using a Route 53 DNS-01 `ClusterIssuer`. No manual cert handling required.
+- **[ExternalDNS](https://github.com/kubernetes-sigs/external-dns)** — automatically creates
+  and updates Route 53 records from Ingress and Service resources. No manual DNS management required.
 
 ## Step 6: Install Juno
 
