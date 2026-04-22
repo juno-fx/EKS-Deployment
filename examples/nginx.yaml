@@ -27,6 +27,8 @@ spec:
         values: |-
           controller:
             kind: DaemonSet  # Runs on every node; use Deployment for selective scheduling
+            config:
+              use-proxy-protocol: "true"
             service:
               annotations:
                 # AWS NLB annotations for proxy protocol v2 (required for client IP preservation)
