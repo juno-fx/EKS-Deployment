@@ -97,9 +97,22 @@ kubectl rollout status deployment/argocd-server -n argocd
 ## Step 4: Deploy ingress-nginx (~3 min)
 
 1. Copy `examples/nginx.yaml` to `<name>/nginx.yaml`
-2. Update the `aws-load-balancer-subnets` annotation with your subnet IDs (comma-separated if multiple)
-   - To retrieve your subnet IDs run:
-   `eksctl get cluster --name <cluster-name> --region <region> -o json | jq '.[0].ResourcesVpcConfig.SubnetIds'`
+2. Update the `aws-load-balancer-subnets` annotation with your public subnet IDs (comma-separated if multiple)
+   - **Step 1** — Get your VPC ID:
+   ```bash
+   eksctl get cluster --name <cluster-name> --region <region> -o json | jq -r '.[0].ResourcesVpcConfig.VpcId'
+   ```
+   - **Step 2** — List public subnets eligible for NLB:
+   ```bash
+   aws ec2 describe-subnets \
+     --filters \
+       "Name=vpc-id,Values=<vpc-id>" \
+       "Name=tag:kubernetes.io/role/elb,Values=1" \
+     --query 'Subnets[].[SubnetId,AvailabilityZone]' \
+     --output table \
+     --region <region>
+   ```
+   > Use **one subnet per AZ**. Passing multiple subnets in the same AZ will cause NLB provisioning issues.
 3. Apply the application:
 
 ```bash
@@ -119,17 +132,17 @@ Wait for the NLB to be provisioned (check the EXTERNAL-IP field).
 
 ### DNS
 
-Create DNS records pointing to the NLB from ingress-nginx:
+Create DNS records (Type A) pointing to the NLB from ingress-nginx:
 
 | Record                  | Target       |
 |-------------------------|--------------|
 | `admin.<your-domain>`   | NLB DNS name |
 | `project.<your-domain>` | NLB DNS name |
 
-Find the NLB DNS name with:
+Find the NLB DNS name with (Its the external IP):
 
 ```bash
-kubectl get svc <service-name> -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+kubectl get svc -n ingress-nginx
 ```
 
 ### TLS Certificate
