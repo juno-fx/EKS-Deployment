@@ -1,5 +1,8 @@
 # Juno EKS Setup Guide
 
+This guide will get Orion up and running in an EKS cluster quickly and easily. If you have any questions you can see more detailed documentation
+[here](https://juno-fx.github.io/Orion-Documentation/latest/installation/advanced/eks/pre/). You can also reach out to our [support team](https://www.juno-innovations.com/contact/support)
+
 ## Prerequisites
 
 - AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`)
@@ -39,6 +42,8 @@ export AWS_REGION=<your region>
 ```
 
 You should see your node group nodes listed.
+
+For additional information you can refer to the [AWS docs](https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html) directly.
 
 ## Step 2: Configure Karpenter NodePools (Optional)
 
