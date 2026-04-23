@@ -102,9 +102,22 @@ kubectl rollout status deployment/argocd-server -n argocd
 ## Step 4: Deploy ingress-nginx (~3 min)
 
 1. Copy `examples/nginx.yaml` to `<name>/nginx.yaml`
-2. Update the `aws-load-balancer-subnets` annotation with your subnet IDs (comma-separated if multiple)
-   - To retrieve your subnet IDs run:
-   `eksctl get cluster --name <cluster-name> --region <region> -o json | jq '.[0].ResourcesVpcConfig.SubnetIds'`
+2. Update the `aws-load-balancer-subnets` annotation with your public subnet IDs (comma-separated if multiple)
+   - **Step 1** — Get your VPC ID:
+   ```bash
+   eksctl get cluster --name <cluster-name> --region <region> -o json | jq -r '.[0].ResourcesVpcConfig.VpcId'
+   ```
+   - **Step 2** — List public subnets eligible for NLB:
+   ```bash
+   aws ec2 describe-subnets \
+     --filters \
+       "Name=vpc-id,Values=<vpc-id>" \
+       "Name=tag:kubernetes.io/role/elb,Values=1" \
+     --query 'Subnets[].[SubnetId,AvailabilityZone]' \
+     --output table \
+     --region <region>
+   ```
+   > Use **one subnet per AZ**. Passing multiple subnets in the same AZ will cause NLB provisioning issues.
 3. Apply the application:
 
 ```bash
@@ -120,22 +133,87 @@ kubectl get svc -n ingress-nginx
 
 Wait for the NLB to be provisioned (check the EXTERNAL-IP field).
 
-## Step 5: DNS (~1 min)
+## Step 5: DNS & TLS
 
-Create DNS records pointing to the NLB from ingress-nginx:
+### DNS
+
+Create DNS records (Type A) pointing to the NLB from ingress-nginx:
 
 | Record                  | Target       |
 |-------------------------|--------------|
 | `admin.<your-domain>`   | NLB DNS name |
 | `project.<your-domain>` | NLB DNS name |
 
-Find the NLB DNS name with:
+Find the NLB DNS name with (Its the external IP):
 
 ```bash
-kubectl get svc -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+kubectl get svc -n ingress-nginx
 ```
 
-Using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) to automate record creation is recommended.
+### TLS Certificate
+
+The Ingress resource requires a TLS secret named `ingress-certificate` in the `argocd` namespace.
+Choose the path that fits your use case:
+
+---
+
+#### POC / Quick Start — certbot (manual)
+
+**1. Install certbot locally:**
+
+```bash
+sudo apt install certbot   # Ubuntu/Debian
+brew install certbot       # Mac
+```
+
+**2. Generate a cert via DNS challenge (no server required):**
+
+```bash
+certbot certonly --manual --preferred-challenges dns \
+  -d <your-domain>
+```
+
+Certbot will prompt you to add a DNS TXT record to prove domain ownership. Add it in Route 53,
+wait ~30 seconds, then press Enter to continue. Certbot will write the cert files to
+`/etc/letsencrypt/live/<your-domain>/`.
+
+**3. Copy certs to a readable location (certbot writes as root):**
+
+```bash
+sudo cp /etc/letsencrypt/live/<your-domain>/fullchain.pem ~/fullchain.pem
+sudo cp /etc/letsencrypt/live/<your-domain>/privkey.pem ~/privkey.pem
+sudo chown $USER ~/fullchain.pem ~/privkey.pem
+```
+
+**4. Create the TLS secret in the cluster:**
+
+```bash
+kubectl create secret tls ingress-certificate \
+  --cert=<path-to-file>/fullchain.pem \
+  --key=<path-to-file>/privkey.pem \
+  -n argocd
+```
+
+**5. Verify:**
+
+```bash
+kubectl get secret ingress-certificate -n argocd
+```
+
+> **Note:** Let's Encrypt certs expire every **90 days**. You must repeat steps 2–4 to renew.
+> If kubectl cannot reach the cluster from your laptop (private VPC), use AWS CloudShell in
+> the same region and upload the cert files via Actions → Upload file before running step 4.
+
+---
+
+#### Production — cert-manager + ExternalDNS (recommended)
+
+For production deployments, automate both DNS and TLS management:
+
+- **[cert-manager](https://cert-manager.io)** — automatically issues and renews TLS certs via
+  Let's Encrypt using a Route 53 DNS-01 `ClusterIssuer`. No manual cert handling required.
+- **[ExternalDNS](https://github.com/kubernetes-sigs/external-dns)** — automatically creates
+  and updates Route 53 records from Ingress and Service resources. No manual DNS management required.
 
 ## Step 6: Install Juno
 
