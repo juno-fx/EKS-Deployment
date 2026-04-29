@@ -1,10 +1,10 @@
 # EKS Cluster Configuration
 #
 # REQUIRED UPDATES:
-#   1. metadata.name                 - Your cluster name
-#   2. metadata.region              - Your AWS region
-#   3. metadata.tags                - Your cluster name (used for Karpenter discovery)
-#   4. availabilityZones            - Your 2 availability zones
+#   1. metadata.name                         - Your cluster name
+#   2. metadata.region                       - Your AWS region
+#   3. metadata.tags                         - Your cluster name (used for Karpenter discovery)
+#   4. availabilityZones                     - Your 2 availability zones
 #   5. managedNodeGroups[].availabilityZones - Your primary AZ
 #   6. managedNodeGroups[].instanceTypes     - Your desired instance types
 #
@@ -29,7 +29,11 @@ iam:
 
 vpc:
   nat:
-    gateway: Disable  # Disabled: use private subnets only, no internet egress
+    # NAT gateway options:
+    #   Single          - One NAT gateway shared across all AZs (~$32/mo). Good for dev/staging.
+    #   HighlyAvailable - One NAT gateway per AZ (~$96/mo). Recommended for production.
+    #   Disable         - No internet egress. Requires VPC endpoints for Karpenter to work.
+    gateway: Disable
 availabilityZones: ['us-east-1a', 'us-east-1b']  # REPLACE with your AZs
 
 karpenter:

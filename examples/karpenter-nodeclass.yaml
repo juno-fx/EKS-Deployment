@@ -20,7 +20,7 @@ spec:
   amiFamily: AL2023
 
   # IAM role for nodes - MUST be replaced with your cluster's Karpenter Node Role
-  # Find this in AWS IAM Console or run: aws eks describe-cluster --name <cluster> --query cluster.roleArn
+  # Find this by running: aws iam list-roles --query "Roles[?contains(RoleName, 'KarpenterNodeRole')].RoleName" --output text
   role: "REPLACE_WITH_YOUR_KARPENTER_NODE_ROLE"
 
   # Subnet selector - Karpenter discovers subnets with these tags
