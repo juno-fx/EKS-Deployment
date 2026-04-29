@@ -33,7 +33,7 @@ vpc:
     #   Single          - One NAT gateway shared across all AZs (~$32/mo). Good for dev/staging.
     #   HighlyAvailable - One NAT gateway per AZ (~$96/mo). Recommended for production.
     #   Disable         - No internet egress. Requires VPC endpoints for Karpenter to work.
-    gateway: Single
+    gateway: Disable
 availabilityZones: ['us-east-1a', 'us-east-1b']  # REPLACE with your AZs
 
 karpenter:
