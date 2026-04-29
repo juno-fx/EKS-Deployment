@@ -67,8 +67,8 @@ cp examples/karpenter-nodepool-service.yaml <name>/
 
 2. Update each manifest with your values:
    - `karpenter-nodeclass.yaml`: Update `role`, `subnetSelectorTerms`, `securityGroupSelectorTerms`
-   - NodePool: Update `topology.kubernetes.io/zone`, `instanceTypes`, and `limits` as needed
-   - Change `capacity-type` to `["on-demand"]` if you don't want spot instances
+   - `karpenter-nodepool-services.yaml`: Update `topology.kubernetes.io/zone`, `instanceTypes`, and `limits` as needed
+   - Change `capacity-type` in `karpenter-nodepool-services.yaml` to `["on-demand"]` if you don't want spot instances
 
 3. Apply the manifests:
 
@@ -80,8 +80,18 @@ kubectl apply -f <name>/karpenter-nodepool-service.yaml
 4. Verify nodes are being provisioned:
 
 ```bash
-kubectl get nodes
+# Confirm resources were accepted
+kubectl get ec2nodeclass
 kubectl get nodepools
+kubectl describe nodepool service
+kubectl describe ec2nodeclass service
+
+# Check Karpenter controller is healthy
+kubectl get pods -n karpenter
+kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter --tail=50
+
+# Check NodePool status conditions
+kubectl get nodepool service -o jsonpath='{.status.conditions}' | jq .
 ```
 
 See `examples/karpenter-nodepool-gpu.yaml` and `examples/karpenter-nodepool-arm64.yaml` for additional pool examples.
