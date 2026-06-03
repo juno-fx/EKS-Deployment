@@ -238,6 +238,10 @@ Juno will be installed on your EKS cluster via Helm.
 
 Once installed, access the Juno admin console at `https://admin.<your-domain>` to begin configuration.
 
+[Here](https://juno-fx.github.io/Orion-Documentation/latest/installation/install/license/)
+ are the docs to manage your AWS license inside Genesis.
+
+
 ## Reconnecting to an Existing Cluster
 
 To reconnect to a previously created cluster for maintenance:
