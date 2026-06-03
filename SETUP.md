@@ -231,7 +231,8 @@ For production deployments, automate both DNS and TLS management:
 2. Navigate to [juno-innovations.com](https://juno-innovations.com)
 3. Click the one-click install button on the homepage
 4. Select **Existing Cluster** as the deployment target
-5. Follow the prompts to complete the installation
+5. Enter y for the target deployment being facilitated by AWS marketplace.
+6. Follow the prompts to complete the installation
 
 Juno will be installed on your EKS cluster via Helm.
 
