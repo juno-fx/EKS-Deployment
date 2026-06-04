@@ -231,7 +231,7 @@ For production deployments, automate both DNS and TLS management:
 2. Navigate to [juno-innovations.com](https://juno-innovations.com)
 3. Click the one-click install button on the homepage
 4. Select **Existing Cluster** as the deployment target
-5. Enter y for the target deployment being facilitated by AWS marketplace.
+5. Enter y if you purchased your license through the AWS marketplace.
 6. Follow the prompts to complete the installation
 
 Juno will be installed on your EKS cluster via Helm.
@@ -239,7 +239,7 @@ Juno will be installed on your EKS cluster via Helm.
 Once installed, access the Juno admin console at `https://admin.<your-domain>` to begin configuration.
 
 [Here](https://juno-fx.github.io/Orion-Documentation/latest/installation/install/license/)
- are the docs to manage your AWS license inside Genesis.
+ are the docs to manage your license inside Genesis.
 
 
 ## Reconnecting to an Existing Cluster
