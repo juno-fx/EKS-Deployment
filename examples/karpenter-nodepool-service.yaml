@@ -65,12 +65,14 @@ spec:
           operator: In
           values: ["spot"]  # Remove this line or change to ["on-demand"] if spot not suitable
 
-      # Instance type overrides - REPLACE with your desired instance types
-      # Examples: c5.xlarge, c5a.xlarge, c6a.xlarge, c7i-flex.xlarge, t3.xlarge
-      # Karpenter will randomly select from this list for spot instances
-      instanceTypes:
-        - c5.xlarge
-        - c5a.xlarge
-        - c5ad.xlarge
-        - c6a.xlarge
-        - c7i-flex.xlarge  # REPLACE with your desired instance types
+        # Instance type overrides - REPLACE with your desired instance types
+        # Examples: c5.xlarge, c5a.xlarge, c6a.xlarge, c7i-flex.xlarge, t3.xlarge
+        # Karpenter will randomly select from this list for spot instances
+        - key: "node.kubernetes.io/instance-type"
+          operator: In
+          values:
+            - c5.xlarge
+            - c5a.xlarge
+            - c5ad.xlarge
+            - c6a.xlarge
+            - c7i-flex.xlarge  # REPLACE with your desired instance types
