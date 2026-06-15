@@ -65,16 +65,19 @@ spec:
           operator: In
           values: ["spot"]  # Remove this line or change to ["on-demand"] if spot not suitable
 
-      # Instance type overrides - REPLACE with your desired ARM instance types
-      # Common ARM64 instances:
-      #   c6g    - Compute optimized (c6g.xlarge, c6g.2xlarge)
-      #   c7g    - Compute optimized, 3rd gen (c7g.xlarge, c7g.2xlarge)
-      #   m6g    - Memory optimized (m6g.xlarge, m6g.2xlarge)
-      #   m7g    - Memory optimized, 3rd gen (m7g.xlarge, m7g.2xlarge)
-      #   r6g    - Memory optimized (r6g.xlarge, r6g.2xlarge)
-      #   r7g    - Memory optimized, 3rd gen (r7g.xlarge, r7g.2xlarge)
-      instanceTypes:
-        - c6g.xlarge
-        - c7g.xlarge
-        - m6g.xlarge
-        - r6g.xlarge  # REPLACE with your desired ARM instance types
+        # Instance type overrides - REPLACE with your desired ARM instance types
+        # Common ARM64 instances:
+        #   c6g    - Compute optimized (c6g.xlarge, c6g.2xlarge)
+        #   c7g    - Compute optimized, 3rd gen (c7g.xlarge, c7g.2xlarge)
+        #   m6g    - Memory optimized (m6g.xlarge, m6g.2xlarge)
+        #   m7g    - Memory optimized, 3rd gen (m7g.xlarge, m7g.2xlarge)
+        #   r6g    - Memory optimized (r6g.xlarge, r6g.2xlarge)
+        #   r7g    - Memory optimized, 3rd gen (r7g.xlarge, r7g.2xlarge)
+        - key: "node.kubernetes.io/instance-type"
+          operator: In
+          values:
+            - c6g.xlarge
+            - c7g.xlarge
+            - m6g.xlarge
+            - r6g.xlarge  # REPLACE with your desired ARM instance types
+

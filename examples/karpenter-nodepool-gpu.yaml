@@ -66,14 +66,16 @@ spec:
           operator: In
           values: ["on-demand"]  # REPLACE: use ["spot"] for cost savings
 
-      # Instance type overrides - REPLACE with your desired GPU instance types
-      # Common GPU instances:
-      #   g4dn  - NVIDIA T4 (cost-effective ML inference)
-      #   g5    - NVIDIA A10G (ML training and inference)
-      #   p3    - NVIDIA V100 (deep learning)
-      #   p4d   - NVIDIA A100 (high-performance ML)
-      #   p5    - NVIDIA H100 (state-of-the-art ML)
-      instanceTypes:
-        - g4dn.xlarge
-        - g5.xlarge
-        - p4d.24xlarge  # REPLACE with your desired GPU instance types
+        # Instance type overrides - REPLACE with your desired GPU instance types
+        # Common GPU instances:
+        #   g4dn  - NVIDIA T4 (cost-effective ML inference)
+        #   g5    - NVIDIA A10G (ML training and inference)
+        #   p3    - NVIDIA V100 (deep learning)
+        #   p4d   - NVIDIA A100 (high-performance ML)
+        #   p5    - NVIDIA H100 (state-of-the-art ML)
+        - key: "node.kubernetes.io/instance-type"
+          operator: In
+          values:
+            - g4dn.xlarge
+            - g5.xlarge
+            - p4d.24xlarge  # REPLACE with your desired GPU instance types
