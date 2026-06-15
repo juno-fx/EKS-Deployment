@@ -75,7 +75,7 @@ spec:
         #   p5    - NVIDIA H100 (state-of-the-art ML)
         - key: "node.kubernetes.io/instance-type"
           operator: In
-          instanceTypes:
+          values:
             - g4dn.xlarge
             - g5.xlarge
             - p4d.24xlarge  # REPLACE with your desired GPU instance types

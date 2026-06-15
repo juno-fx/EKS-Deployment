@@ -75,7 +75,7 @@ spec:
         #   r7g    - Memory optimized, 3rd gen (r7g.xlarge, r7g.2xlarge)
         - key: "node.kubernetes.io/instance-type"
           operator: In
-          instanceTypes:
+          values:
             - c6g.xlarge
             - c7g.xlarge
             - m6g.xlarge
