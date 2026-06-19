@@ -16,6 +16,7 @@ export AWS_SESSION_TOKEN=<your-session-token> If you have one
  
 - [eksctl](https://eksctl.io/installation/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
 ## Step 1: Create EKS Cluster (~15 min)
 
