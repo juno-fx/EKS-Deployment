@@ -53,7 +53,7 @@ spec:
         # Availability zone - REPLACE with your primary AZ
         - key: "topology.kubernetes.io/zone"
           operator: In
-          values: ["us-east-1a"]  # REPLACE with your AZ (e.g., us-east-1a, us-west-2a)
+          values: ["us-east-1a"]  # REPLACE with your main AZ. Only put 1 and make sure other karpenter files match (e.g., us-east-1a, us-west-2a)
 
         # Architecture: amd64 (x86_64)
         - key: "kubernetes.io/arch"

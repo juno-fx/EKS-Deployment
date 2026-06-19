@@ -45,15 +45,10 @@ spec:
           operator: In
           values: ["c", "t", "r", "m"]  # REPLACE with your desired ARM instance families
 
-        # Minimum vCPUs (Gt = greater than)
-        - key: "karpenter.k8s.aws/instance-cpu"
-          operator: Gt
-          values: ["2"]  # REPLACE with your minimum CPU requirement
-
         # Availability zone - REPLACE with your primary AZ
         - key: "topology.kubernetes.io/zone"
           operator: In
-          values: ["us-east-1a"]  # REPLACE with your AZ (e.g., us-east-1a, us-west-2a)
+          values: ["us-east-1a"]  # REPLACE with your main AZ. Only put 1 and make sure other karpenter files match (e.g., us-east-1a, us-west-2a)
 
         # Architecture: arm64 (ARM)
         - key: "kubernetes.io/arch"
