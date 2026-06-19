@@ -37,7 +37,7 @@ vpc:
 availabilityZones: ['us-east-1a', 'us-east-1b']  # REPLACE with your AZs
 
 karpenter:
-  version: "1.2.0"
+  version: "1.13.0"
   createServiceAccount: true
   withSpotInterruptionQueue: true  # Handles spot instance interruptions via SQS
 

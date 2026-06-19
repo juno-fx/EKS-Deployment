@@ -5,10 +5,18 @@ This guide will get Orion up and running in an EKS cluster quickly and easily. I
 
 ## Prerequisites
 
-- AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`)
-- [eksctl](https://eksctl.io/installation/) installed
-- [kubectl](https://kubernetes.io/docs/tasks/tools/) installed
-- (Optional) [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html) installed
+1. Set your AWS credentials:
+
+```bash
+export AWS_ACCESS_KEY_ID=<your-access-key-id>
+export AWS_SECRET_ACCESS_KEY=<your-secret-access-key>
+export AWS_SESSION_TOKEN=<your-session-token> If you have one
+```
+2. Install tools
+ 
+- [eksctl](https://eksctl.io/installation/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
 ## Step 1: Create EKS Cluster (~15 min)
 
@@ -56,25 +64,52 @@ The `examples/karpenter-*.yaml` files are reference templates showing one way to
 - Create any number of NodePools with custom configurations
 - Skip Karpenter entirely and use the managed node groups
 
+**NodePool templates available:**
+
+| File | Purpose | Required? |
+|------|---------|-----------|
+| `karpenter-nodeclass.yaml` | EC2NodeClass — shared by every NodePool below | Always, if using Karpenter |
+| `karpenter-nodepool-service.yaml` | Dedicated nodes for ingress-nginx (carries the load-bearing `juno-innovations.com/service: "true"` label) | Always, if using Karpenter |
+| `karpenter-nodepool-cpu.yaml` | General-purpose CPU workloads (amd64) | Only if you run CPU workstation workloads |
+| `karpenter-nodepool-gpu.yaml` | GPU workloads (amd64, g/p instance families) | Only if you run GPU workstation workloads |
+| `karpenter-nodepool-arm64.yaml` | ARM64 workloads | Only if you run ARM workstation workloads |
+
+**Only create the NodePools you actually need.** `service` is the only one tied to a specific platform requirement (the ingress-nginx node-targeting label) and should always be created. `cpu`, `gpu`, and `arm64` are independent — if you have no GPU workload, skip `karpenter-nodepool-gpu.yaml` entirely rather than applying it unused.
+
+**Weight and scheduling priority:**
+
+`cpu` and `gpu` both label nodes `juno-innovations.com/workstation: "true"` and can both satisfy a workstation pod that doesn't pin itself to a specific instance family. `spec.weight` (1-100, default 0) breaks the tie — Karpenter prefers the higher-weight NodePool when more than one could provision for a pod. The templates ship with `cpu: weight 10` > `gpu: weight 5`, so CPU is preferred by default.
+
+- If GPU instances should be preferred instead, raise `gpu`'s weight above `cpu`'s (e.g. `gpu: 10`, `cpu: 5`).
+- If you only create one of the two (e.g. GPU-only), weight is moot — there's nothing to compete with.
+- `service` and `arm64` don't need a weight: `service` only matches pods that explicitly request its label, and `arm64`'s `kubernetes.io/arch: arm64` requirement keeps it from overlapping with the amd64 `cpu`/`gpu` pools.
+
 **To add Karpenter:**
 
-1. Copy the Karpenter manifests:
+1. Copy the manifests you need (always copy `karpenter-nodeclass.yaml` and `karpenter-nodepool-service.yaml`; add `cpu`/`gpu`/`arm64` as needed):
 
 ```bash
 cp examples/karpenter-nodeclass.yaml <name>/
 cp examples/karpenter-nodepool-service.yaml <name>/
+cp examples/karpenter-nodepool-cpu.yaml <name>/    # only if you need CPU workstation nodes
+cp examples/karpenter-nodepool-gpu.yaml <name>/    # only if you need GPU workstation nodes
+cp examples/karpenter-nodepool-arm64.yaml <name>/  # only if you need ARM64 workstation nodes
 ```
 
 2. Update each manifest with your values:
    - `karpenter-nodeclass.yaml`: Update `role`, `subnetSelectorTerms`, `securityGroupSelectorTerms`
-   - `karpenter-nodepool-services.yaml`: Update `topology.kubernetes.io/zone`, `instanceTypes`, and `limits` as needed
-   - Change `capacity-type` in `karpenter-nodepool-services.yaml` to `["on-demand"]` if you don't want spot instances
+   - Each `karpenter-nodepool-*.yaml`: Update `topology.kubernetes.io/zone`, `instanceTypes`, and `limits` as needed — must match the AZ used in `karpenter-nodeclass.yaml`/`eks.yaml`
+   - Change `capacity-type` to `["on-demand"]` in any pool where you don't want spot instances
+   - If creating both `cpu` and `gpu`, set `weight` on each to reflect which should be preferred (see above)
 
-3. Apply the manifests:
+3. Apply the manifests you copied, e.g.:
 
 ```bash
 kubectl apply -f <name>/karpenter-nodeclass.yaml
 kubectl apply -f <name>/karpenter-nodepool-service.yaml
+kubectl apply -f <name>/karpenter-nodepool-cpu.yaml    # if created
+kubectl apply -f <name>/karpenter-nodepool-gpu.yaml    # if created
+kubectl apply -f <name>/karpenter-nodepool-arm64.yaml  # if created
 ```
 
 4. Verify nodes are being provisioned:
@@ -93,8 +128,6 @@ kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter --tail=50
 # Check NodePool status conditions
 kubectl get nodepool service -o jsonpath='{.status.conditions}' | jq .
 ```
-
-See `examples/karpenter-nodepool-gpu.yaml` and `examples/karpenter-nodepool-arm64.yaml` for additional pool examples.
 
 ## Step 3: Install ArgoCD (~1 min)
 
@@ -127,7 +160,7 @@ kubectl rollout status deployment/argocd-server -n argocd
      --output table \
      --region <region>
    ```
-   > Use **one subnet per AZ**. Passing multiple subnets in the same AZ will cause NLB provisioning issues.
+   > Use the subnet from your main AZ. .
 3. Apply the application:
 
 ```bash
@@ -251,7 +284,7 @@ To reconnect to a previously created cluster for maintenance:
 ```bash
 export AWS_ACCESS_KEY_ID=<your-access-key-id>
 export AWS_SECRET_ACCESS_KEY=<your-secret-access-key>
-export AWS_SESSION_TOKEN=<your-session-token>
+export AWS_SESSION_TOKEN=<your-session-token> If you have one
 ```
 
 2. Verify cluster access:

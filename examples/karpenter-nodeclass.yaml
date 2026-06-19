@@ -4,7 +4,7 @@
 #
 # REQUIRED UPDATES:
 #   1. role: Replace with your cluster's Karpenter Node IAM Role
-#   2. subnetSelectorTerms: Update karpenter.sh/discovery tag to match your cluster name
+#   2. subnetSelectorTerms: Update karpenter.sh/discovery id to match your nodes public subnet
 #   3. securityGroupSelectorTerms: Update karpenter.sh/discovery tag to match your cluster name
 #   4. volumeSize: Adjust to your storage requirements (default: 100Gi)
 #
@@ -20,14 +20,18 @@ spec:
   amiFamily: AL2023
 
   # IAM role for nodes - MUST be replaced with your cluster's Karpenter Node Role
-  # Find this by running: aws iam list-roles --query "Roles[?contains(RoleName, 'KarpenterNodeRole')].RoleName" --output text
+  # Find this by running: "aws iam list-roles --query "Roles[?contains(RoleName, 'KarpenterNodeRole')].RoleName" --output text"
   role: "REPLACE_WITH_YOUR_KARPENTER_NODE_ROLE"
 
-  # Subnet selector - Karpenter discovers subnets with these tags
-  # The karpenter.sh/discovery tag value MUST match your cluster name
+  # Subnet selector - explicit public subnet IDs (one per AZ)
+  # REPLACE with your public subnet ID
+  # Run "kubectl get nodes" to get the node name
+  # Run "kubectl get node <node-name> -o jsonpath='{.spec.providerID}'"
+  # Go into the AWS console and find the ec2 running, match the ID to it to confirm you are
+  # viewing the right ec2, Click on it and go to the network tab
+  # find the PUBLIC subnet the node has
   subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: REPLACE_WITH_YOUR_CLUSTER_NAME
+    - id: "REPLACE_WITH_YOUR_PUBLIC_SUBNET"
 
   # Security group selector - Karpenter discovers security groups with these tags
   # The karpenter.sh/discovery tag value MUST match your cluster name
