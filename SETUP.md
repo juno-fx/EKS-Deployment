@@ -133,7 +133,7 @@ kubectl get nodepool service -o jsonpath='{.status.conditions}' | jq .
 
 ```bash
 kubectl create namespace argocd
-kubectl create -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/refs/heads/master/manifests/install.yaml
+kubectl create -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/refs/tags/v3.4.4/manifests/install.yaml
 ```
 
 Wait for ArgoCD to be ready:
