@@ -27,6 +27,19 @@ metadata:
 iam:
   withOIDC: true  # Required for IRSA (IAM Roles for Service Accounts)
 
+# EKS-managed addons. wellKnownPolicies auto-creates the IRSA role + attaches
+# the correct AWS-managed policy - the node group's `withAddonPolicies.ebs`
+# below only grants the node role permissions, it does NOT install the
+# driver itself. Without this block the aws-ebs-csi-driver never gets
+# deployed and any StorageClass using it hangs forever on PVC provisioning.
+addons:
+  - name: aws-ebs-csi-driver
+    wellKnownPolicies:
+      ebsCSIController: true
+  - name: aws-efs-csi-driver
+    wellKnownPolicies:
+      efsCSIController: true
+
 vpc:
   nat:
     # NAT gateway options:
